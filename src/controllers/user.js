@@ -83,3 +83,7 @@ exports.login = catchAsync(async (req, res) => {
     }
   }
 });
+
+exports.forgotPass = catchAsync(async (req, res) => {
+  const { email } = req.body;
+});
