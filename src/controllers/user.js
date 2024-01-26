@@ -49,7 +49,7 @@ exports.login = catchAsync(async (req, res) => {
   });
 
   if (!data) {
-    res.status(404).json({
+    res.status(200).json({
       status: false,
       message: 'Pengguna tidak ditemukan',
     });
@@ -57,7 +57,7 @@ exports.login = catchAsync(async (req, res) => {
     const isPassCorrect = await bcrypt.compare(password, data.password);
 
     if (!isPassCorrect) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         message: 'Password incorrect',
       });
