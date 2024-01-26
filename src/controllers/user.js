@@ -32,7 +32,7 @@ exports.register = catchAsync(async (req, res) => {
       data: user,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(200).json({
       status: false,
       message: error.message,
     });

@@ -31,7 +31,7 @@ exports.addPengaduan = catchAsync(async (req, res) => {
       photoUrl = result.url;
     } catch (error) {
       return res
-        .status(400)
+        .status(200)
         .json({ status: false, message: 'Failed to upload photo' });
     }
   }
