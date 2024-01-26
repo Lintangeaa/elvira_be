@@ -1,6 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
 const cloudinary = require('cloudinary').v2;
-const { Pengaduan } = require('../db/models');
+const { Pengaduan, User } = require('../db/models');
 
 const { CLOUD_NAME, API_KEY, API_SECRET } = process.env;
 
@@ -37,6 +37,7 @@ exports.addPengaduan = catchAsync(async (req, res) => {
   }
 
   const newPengaduan = await Pengaduan.create({
+    userId: req.user.id,
     name,
     phone,
     address,
@@ -53,6 +54,7 @@ exports.addPengaduan = catchAsync(async (req, res) => {
 
 exports.getAllPengaduan = catchAsync(async (req, res) => {
   const { page = 1, limit = 10, name = '' } = req.query;
+  const { username } = req.params;
   const offset = (page - 1) * limit;
 
   const whereCondition = {};
@@ -95,7 +97,7 @@ exports.getAllPengaduan = catchAsync(async (req, res) => {
       status: true,
       message: 'Retrieved all clients',
       currentPage: page,
-      totalItems: totalClients,
+      totalItems: pengaduan.count,
       totalPages: Math.ceil(pengaduan.count / limit),
       data,
     });
