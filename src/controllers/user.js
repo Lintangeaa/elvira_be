@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET_KEY } = process.env;
 
 exports.register = catchAsync(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, role } = req.body;
 
   try {
     await registerSchema.validateAsync(
@@ -24,15 +24,16 @@ exports.register = catchAsync(async (req, res) => {
       username,
       email,
       password: hashedPassword,
+      role,
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       status: true,
       message: 'Register Berhasil',
       data: user,
     });
   } catch (error) {
-    res.status(400).json({
+    res.status(200).json({
       status: false,
       message: error.message,
     });
@@ -49,7 +50,7 @@ exports.login = catchAsync(async (req, res) => {
   });
 
   if (!data) {
-    res.status(404).json({
+    res.status(200).json({
       status: false,
       message: 'Pengguna tidak ditemukan',
     });
@@ -57,7 +58,7 @@ exports.login = catchAsync(async (req, res) => {
     const isPassCorrect = await bcrypt.compare(password, data.password);
 
     if (!isPassCorrect) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: false,
         message: 'Password incorrect',
       });
@@ -82,4 +83,8 @@ exports.login = catchAsync(async (req, res) => {
       });
     }
   }
+});
+
+exports.forgotPass = catchAsync(async (req, res) => {
+  const { email } = req.body;
 });

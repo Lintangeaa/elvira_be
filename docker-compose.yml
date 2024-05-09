@@ -1,0 +1,17 @@
+version: '3.7'
+services:
+  elvira-be:
+    image: elvira-be
+    build: .
+    container_name: elvira-be
+    env_file:
+      - ./.env
+    restart: always
+    ports:
+      - '8200:8090'
+    networks:
+      - elvira
+networks:
+  elvira:
+    name: elvira
+    driver: bridge
