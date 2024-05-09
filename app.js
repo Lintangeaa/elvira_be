@@ -7,6 +7,7 @@ var cors = require('cors');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var pengaduanRouter = require('./routes/pengaduan');
+var artikelRouter = require('./routes/artikel');
 
 var swaggerDocument = require('./swagger-output.json');
 
@@ -23,6 +24,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/pengaduan', pengaduanRouter);
+app.use('/artikel', artikelRouter);
 
 // Error handler
 app.use(function (err, req, res, next) {

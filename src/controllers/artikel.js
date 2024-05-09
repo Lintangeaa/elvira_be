@@ -1,8 +1,9 @@
 const catchAsync = require('../utils/catchAsync');
 const cloudinary = require('cloudinary').v2;
 const mimetype = require('mime-type');
+const { Op } = require('sequelize');
 
-const { Pengaduan, User, sequelize } = require('../db/models');
+const { Artikel, sequelize } = require('../db/models');
 
 const { CLOUD_NAME, API_KEY, API_SECRET } = process.env;
 
@@ -12,8 +13,9 @@ cloudinary.config({
   api_secret: API_SECRET,
 });
 
-exports.addPengaduan = catchAsync(async (req, res) => {
-  const { nama, telepon, lokasi, keluhan } = req.body;
+exports.addArtikel = catchAsync(async (req, res) => {
+  const { judul, deskripsi } = req.body;
+
   if (!req.file || !req.file.mimetype.startsWith('image')) {
     return res
       .status(400)
@@ -37,14 +39,11 @@ exports.addPengaduan = catchAsync(async (req, res) => {
 
     const photoUrl = result.url;
 
-    const newPengaduan = await Pengaduan.create(
+    const newArtikel = await Artikel.create(
       {
-        name: nama,
-        phone: telepon,
-        address: lokasi,
-        complaint: keluhan,
-        userId: req.user.id,
-        photo: photoUrl,
+        judul,
+        deskripsi,
+        gambar: photoUrl,
       },
       { transaction },
     );
@@ -53,8 +52,8 @@ exports.addPengaduan = catchAsync(async (req, res) => {
 
     return res.status(201).json({
       status: true,
-      message: 'Pengaduan Berhasil Dikirimkan',
-      data: newPengaduan,
+      message: 'Berhasil Menambahkan Artikel',
+      data: newArtikel,
     });
   } catch (error) {
     await transaction.rollback();
@@ -65,107 +64,76 @@ exports.addPengaduan = catchAsync(async (req, res) => {
   }
 });
 
-exports.getAllPengaduan = catchAsync(async (req, res) => {
-  const { page = 1, limit = 10, name = '' } = req.query;
-  const { username } = req.params;
+exports.getAllArtikel = catchAsync(async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  const { search } = req.query;
   const offset = (page - 1) * limit;
 
   const whereCondition = {};
-  if (username) {
-    whereCondition['$name$'] = { [Op.iLike]: `%${name}%` };
+
+  if (search) {
+    whereCondition[Op.or] = [
+      { judul: { [Op.like]: `%${search}%` } },
+      { deskripsi: { [Op.like]: `%${search}%` } },
+    ];
   }
 
-  const pengaduan = await Pengaduan.findAndCountAll({
+  console.log(whereCondition);
+
+  const data = await Artikel.findAndCountAll({
     limit: parseInt(limit),
     offset: offset,
-    include: [
-      {
-        model: User,
-        attributes: ['username', 'email'],
-      },
-    ],
     where: whereCondition,
   });
 
-  if (pengaduan.count == 0) {
+  if (data.count == 0) {
     return res.status(200).json({
       status: true,
-      message: 'Tidak ada pengaduan',
+      message: 'Tidak ada Artikel',
       data: [],
     });
-  } else {
-    const data = pengaduan.rows.map((e) => {
-      return {
-        id: e.id,
-        email: e.User?.email ?? '',
-        nama: e.name,
-        telepon: e.phone,
-        lokasi: e.address,
-        keluhan: e.complaint,
-        photo: e.photo,
-        username: e.User?.username ?? '',
-      };
-    });
-
-    return res.status(200).json({
-      status: true,
-      message: 'Sukse mendapatkan pengaduans',
-      currentPage: page,
-      totalItems: pengaduan.count,
-      totalPages: Math.ceil(pengaduan.count / limit),
-      data,
-    });
   }
+
+  return res.status(200).json({
+    status: true,
+    message: 'Berhasil Mendapatkan Artikel',
+    currentPage: page,
+    totalItems: data.count,
+    totalPages: Math.ceil(data.count / limit),
+    data: data.rows,
+  });
 });
 
-exports.getPengaduanById = catchAsync(async (req, res) => {
-  const id = req.params.pengaduanId;
+exports.getArtikelById = catchAsync(async (req, res) => {
+  const id = req.params.artikelId;
 
-  const data = await Pengaduan.findOne({
-    where: {
-      id: id,
-    },
-    include: [{ model: User, attributes: ['username', 'email'] }],
-  });
+  const data = await Artikel.findByPk(id);
 
   if (!data) {
     return res.status(404).json({
       status: false,
-      message: 'Pengaduan tidak ada!',
+      message: 'Artikel tidak ada!',
       data: null,
     });
   }
-
-  console.log(data);
-
-  const jsonData = {
-    id: data.id,
-    email: data.User?.email ?? '',
-    nama: data.name,
-    telepon: data.phone,
-    lokasi: data.address,
-    keluhan: data.complaint,
-    photo: data.photo,
-    username: data.User?.username ?? '',
-  };
 
   return res.status(200).json({
     status: true,
     message: 'Success',
-    data: jsonData,
+    data,
   });
 });
 
-exports.updatePengaduan = catchAsync(async (req, res) => {
-  const id = req.params.pengaduanId;
-  const { nama, telepon, lokasi, keluhan } = req.body;
+exports.updateArtikel = catchAsync(async (req, res) => {
+  const id = req.params.artikelId;
+  const { judul, deskripsi } = req.body;
 
-  const data = await Pengaduan.findByPk(id);
+  const data = await Artikel.findByPk(id);
 
   if (!data) {
     return res.status(404).json({
       status: false,
-      message: 'Pengaduan tidak ada!',
+      message: 'Artikel tidak ada!',
       data: null,
     });
   }
@@ -193,14 +161,11 @@ exports.updatePengaduan = catchAsync(async (req, res) => {
 
     const photoUrl = result.url;
 
-    const newPengaduan = await data.update(
+    const newArtikel = await data.update(
       {
-        name: nama || data.name,
-        phone: telepon || data.phone,
-        address: lokasi || data.address,
-        complaint: keluhan || data.complaint,
-        email: data.email,
-        photo: photoUrl || data.photo,
+        judul: judul || data.judul,
+        deskripsi: deskripsi || data.deskripsi,
+        gambar: photoUrl || data.gambar,
       },
       { transaction },
     );
@@ -209,8 +174,8 @@ exports.updatePengaduan = catchAsync(async (req, res) => {
 
     return res.status(201).json({
       status: true,
-      message: 'Pengaduan Berhasil Diedit',
-      data: newPengaduan,
+      message: 'Artikel Berhasil Diedit',
+      data: newArtikel,
     });
   } catch (error) {
     await transaction.rollback();
@@ -221,15 +186,15 @@ exports.updatePengaduan = catchAsync(async (req, res) => {
   }
 });
 
-exports.deletePengaduan = catchAsync(async (req, res) => {
-  const id = req.params.pengaduanId;
+exports.deleteArtikel = catchAsync(async (req, res) => {
+  const id = req.params.artikelId;
 
-  const data = await Pengaduan.findByPk(id);
+  const data = await Artikel.findByPk(id);
 
   if (!data) {
     return res.status(404).json({
       status: false,
-      message: 'Pengaduan tidak ada!',
+      message: 'Artikel tidak ada!',
       data: null,
     });
   }
