@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET_KEY } = process.env;
 
 exports.register = catchAsync(async (req, res) => {
-  const { username, email, password, role } = req.body;
+  const { username, email, password } = req.body;
 
   try {
     await registerSchema.validateAsync(
@@ -24,7 +24,7 @@ exports.register = catchAsync(async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      role,
+      role: 1,
     });
 
     return res.status(201).json({

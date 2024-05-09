@@ -1,6 +1,6 @@
 const catchAsync = require('../utils/catchAsync');
 const cloudinary = require('cloudinary').v2;
-const mimetype = require('mime-type');
+const { Op } = require('sequelize');
 
 const { Pengaduan, User, sequelize } = require('../db/models');
 
@@ -13,7 +13,7 @@ cloudinary.config({
 });
 
 exports.addPengaduan = catchAsync(async (req, res) => {
-  const { nama, telepon, lokasi, keluhan } = req.body;
+  const { nama, email, telepon, lokasi, keluhan } = req.body;
   if (!req.file || !req.file.mimetype.startsWith('image')) {
     return res
       .status(400)
@@ -39,12 +39,12 @@ exports.addPengaduan = catchAsync(async (req, res) => {
 
     const newPengaduan = await Pengaduan.create(
       {
-        name: nama,
-        phone: telepon,
-        address: lokasi,
-        complaint: keluhan,
-        userId: req.user.id,
-        photo: photoUrl,
+        nama,
+        telepon,
+        lokasi,
+        email,
+        keluhan,
+        gambar: photoUrl,
       },
       { transaction },
     );
@@ -66,24 +66,22 @@ exports.addPengaduan = catchAsync(async (req, res) => {
 });
 
 exports.getAllPengaduan = catchAsync(async (req, res) => {
-  const { page = 1, limit = 10, name = '' } = req.query;
-  const { username } = req.params;
+  const { page = 1, limit = 10, search = '' } = req.query;
   const offset = (page - 1) * limit;
 
   const whereCondition = {};
-  if (username) {
-    whereCondition['$name$'] = { [Op.iLike]: `%${name}%` };
+  if (search && search != '') {
+    whereCondition[Op.or] = [
+      { name: { [Op.like]: `%${search}%` } },
+      { email: { [Op.like]: `%${search}%` } },
+      { phone: { [Op.like]: `%${search}%` } },
+      { address: { [Op.like]: `%${search}%` } },
+      { complaint: { [Op.like]: `%${search}%` } },
+    ];
   }
-
   const pengaduan = await Pengaduan.findAndCountAll({
     limit: parseInt(limit),
     offset: offset,
-    include: [
-      {
-        model: User,
-        attributes: ['username', 'email'],
-      },
-    ],
     where: whereCondition,
   });
 
@@ -93,40 +91,22 @@ exports.getAllPengaduan = catchAsync(async (req, res) => {
       message: 'Tidak ada pengaduan',
       data: [],
     });
-  } else {
-    const data = pengaduan.rows.map((e) => {
-      return {
-        id: e.id,
-        email: e.User?.email ?? '',
-        nama: e.name,
-        telepon: e.phone,
-        lokasi: e.address,
-        keluhan: e.complaint,
-        photo: e.photo,
-        username: e.User?.username ?? '',
-      };
-    });
-
-    return res.status(200).json({
-      status: true,
-      message: 'Sukse mendapatkan pengaduans',
-      currentPage: page,
-      totalItems: pengaduan.count,
-      totalPages: Math.ceil(pengaduan.count / limit),
-      data,
-    });
   }
+
+  return res.status(200).json({
+    status: true,
+    message: 'Berhasil Mendapatkan pengaduan',
+    currentPage: page,
+    totalItems: pengaduan.count,
+    totalPages: Math.ceil(pengaduan.count / limit),
+    data: pengaduan.rows,
+  });
 });
 
 exports.getPengaduanById = catchAsync(async (req, res) => {
   const id = req.params.pengaduanId;
 
-  const data = await Pengaduan.findOne({
-    where: {
-      id: id,
-    },
-    include: [{ model: User, attributes: ['username', 'email'] }],
-  });
+  const data = await Pengaduan.findByPk(id);
 
   if (!data) {
     return res.status(404).json({
@@ -136,29 +116,16 @@ exports.getPengaduanById = catchAsync(async (req, res) => {
     });
   }
 
-  console.log(data);
-
-  const jsonData = {
-    id: data.id,
-    email: data.User?.email ?? '',
-    nama: data.name,
-    telepon: data.phone,
-    lokasi: data.address,
-    keluhan: data.complaint,
-    photo: data.photo,
-    username: data.User?.username ?? '',
-  };
-
   return res.status(200).json({
     status: true,
     message: 'Success',
-    data: jsonData,
+    data,
   });
 });
 
 exports.updatePengaduan = catchAsync(async (req, res) => {
   const id = req.params.pengaduanId;
-  const { nama, telepon, lokasi, keluhan } = req.body;
+  const { nama, email, telepon, lokasi, keluhan } = req.body;
 
   const data = await Pengaduan.findByPk(id);
 
@@ -195,12 +162,12 @@ exports.updatePengaduan = catchAsync(async (req, res) => {
 
     const newPengaduan = await data.update(
       {
-        name: nama || data.name,
-        phone: telepon || data.phone,
-        address: lokasi || data.address,
-        complaint: keluhan || data.complaint,
+        nama: nama || data.name,
+        telepon: telepon || data.phone,
+        lokasi: lokasi || data.address,
+        keluhan: keluhan || data.complaint,
         email: data.email,
-        photo: photoUrl || data.photo,
+        gambar: photoUrl || data.photo,
       },
       { transaction },
     );
