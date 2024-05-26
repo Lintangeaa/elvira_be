@@ -162,12 +162,12 @@ exports.updatePengaduan = catchAsync(async (req, res) => {
 
     const newPengaduan = await data.update(
       {
-        nama: nama || data.name,
-        telepon: telepon || data.phone,
-        lokasi: lokasi || data.address,
-        keluhan: keluhan || data.complaint,
+        nama: nama || data.nama,
+        telepon: telepon || data.telepon,
+        lokasi: lokasi || data.lokasi,
+        keluhan: keluhan || data.keluhan,
         email: email || data.email,
-        gambar: photoUrl || data.photo,
+        gambar: photoUrl || data.gambar,
       },
       { transaction },
     );
