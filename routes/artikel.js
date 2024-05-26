@@ -13,10 +13,10 @@ var router = express.Router();
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-router.post('/', upload.single('gambar'), auth, addArtikel);
-router.get('/', auth, getAllArtikel);
-router.get('/:artikelId', auth, getArtikelById);
-router.put('/:artikelId', upload.single('gambar'), auth, updateArtikel);
-router.delete('/:artikelId', auth, deleteArtikel);
+router.post('/', upload.single('gambar'), addArtikel);
+router.get('/', getAllArtikel);
+router.get('/:artikelId', getArtikelById);
+router.put('/:artikelId', upload.single('gambar'), updateArtikel);
+router.delete('/:artikelId', deleteArtikel);
 
 module.exports = router;
