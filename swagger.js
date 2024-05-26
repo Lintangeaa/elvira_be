@@ -4,7 +4,7 @@ const { PORT, NODE_ENV } = process.env;
 
 // Tentukan URL server berdasarkan lingkungan
 
-const serverUrl = `http://localhost:${PORT}`;
+const serverUrl = `https://localhost:${PORT}`;
 
 const doc = {
   info: {

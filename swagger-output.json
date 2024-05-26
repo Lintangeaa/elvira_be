@@ -8,7 +8,7 @@
   "host": "",
   "servers": [
     {
-      "url": "http://localhost:8090",
+      "url": "https://localhost:8090",
       "description": "documentation"
     }
   ],

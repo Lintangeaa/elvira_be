@@ -72,11 +72,11 @@ exports.getAllPengaduan = catchAsync(async (req, res) => {
   const whereCondition = {};
   if (search && search != '') {
     whereCondition[Op.or] = [
-      { name: { [Op.like]: `%${search}%` } },
+      { nama: { [Op.like]: `%${search}%` } },
       { email: { [Op.like]: `%${search}%` } },
-      { phone: { [Op.like]: `%${search}%` } },
-      { address: { [Op.like]: `%${search}%` } },
-      { complaint: { [Op.like]: `%${search}%` } },
+      { telepon: { [Op.like]: `%${search}%` } },
+      { lokasi: { [Op.like]: `%${search}%` } },
+      { keluhan: { [Op.like]: `%${search}%` } },
     ];
   }
   const pengaduan = await Pengaduan.findAndCountAll({
@@ -166,7 +166,7 @@ exports.updatePengaduan = catchAsync(async (req, res) => {
         telepon: telepon || data.phone,
         lokasi: lokasi || data.address,
         keluhan: keluhan || data.complaint,
-        email: data.email,
+        email: email || data.email,
         gambar: photoUrl || data.photo,
       },
       { transaction },
